@@ -53,7 +53,7 @@ keycloak:
     client-id: ${KEYCLOAK_BACKEND_CLIENT:-backend-client}
     client-secret: ${KEYCLOAK_BACKEND_CLIENT_SECRET:-backend-secret-keycloak-251017}
   registration:
-    realm: ${KEYCLOAK_REALM:tarif-secur-realm}
+    realm: ${KEYCLOAK_REALM:-tarif-secur-realm}
 
 
 # ===================================================
