@@ -1,6 +1,8 @@
 package com.muhend.backend.auth.controller;
 
 import com.muhend.backend.auth.dto.UserRegistrationRequest;
+import com.muhend.backend.auth.models.User;
+import com.muhend.backend.auth.repository.UserRepository;
 import com.muhend.backend.auth.service.KeycloakAdminService;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.core.Response;
@@ -11,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.Map;
 
 @RestController
@@ -21,9 +24,11 @@ public class AuthController {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
     private final KeycloakAdminService keycloakAdminService;
+    private final UserRepository userRepository;
 
-    public AuthController(KeycloakAdminService keycloakAdminService) {
+    public AuthController(KeycloakAdminService keycloakAdminService, UserRepository userRepository) {
         this.keycloakAdminService = keycloakAdminService;
+        this.userRepository = userRepository;
         logger.info("AuthController initialized");
     }
 
@@ -42,6 +47,26 @@ public class AuthController {
 
             if (status == Response.Status.CREATED.getStatusCode()) {
                 logger.info("✓ User created successfully: {}", registrationRequest.getUsername());
+
+                // Cette partie n'est aucunement nécessaire pour la bonne marche de l'authentification et de l'enregistrement des utilisateurs
+                // Extraire l'ID de l'utilisateur depuis l'en-tête "Location"
+                URI location = response.getLocation();
+                if (location != null) {
+                    String path = location.getPath();
+                    String userId = path.substring(path.lastIndexOf('/') + 1);
+
+                    // Créer et sauvegarder l'utilisateur dans la base de données locale
+                    User newUser = new User(
+                        userId,
+                        registrationRequest.getUsername(),
+                        registrationRequest.getEmail(),
+                        registrationRequest.getFirstName(),
+                        registrationRequest.getLastName()
+                    );
+                    userRepository.save(newUser);
+                    logger.info("✓ User saved locally with ID: {}", userId);
+                }
+                //
                 response.close();
                 return ResponseEntity.status(HttpStatus.CREATED)
                     .body(Map.of("message", "Utilisateur créé avec succès"));
